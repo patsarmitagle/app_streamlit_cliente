@@ -30,31 +30,33 @@ try:
         st.markdown("### 🔍 Último registro creado")
 
         # Función para mostrar input con botón copiar
-        def copy_button(label, text):
+        def copy_button(label, value, id_html):
             html(f"""
-                <div style="margin-bottom:10px">
-                    <span style="font-weight:bold; margin-right:10px">{label}</span>
-                    <input type="text" value="{text}" id="{label}" readonly style="margin-right:10px; padding:5px; border-radius:5px; width:200px"/>
-                    <button onclick="navigator.clipboard.writeText(document.getElementById('{label}').value)">📋 Copiar</button>
+                <div style="margin-bottom:10px;">
+                    <label style="font-weight: bold; margin-right: 10px;">{label}</label>
+                    <input type="text" value="{value}" id="{id_html}" readonly style="padding:5px; border-radius:5px; width:200px;"/>
+                    <button onclick="navigator.clipboard.writeText(document.getElementById('{id_html}').value)"
+                            style="margin-left: 10px;">📋 Copiar</button>
                 </div>
-            """, height=40)
+            """, height=45)
 
-        # Mostrar número de identificación y fecha con botón copiar
-        copy_button("Número de Identificación", ultimo.get("num_identificacion"))
-        copy_button("Fecha de Nacimiento", ultimo.get("fecha_nacimiento"))
+        # Mostrar campos con botón copiar
+        copy_button("🆔 Número de Identificación", ultimo.get("num_identificacion", ""), "num_identificacion")
+        copy_button("📅 Fecha de Nacimiento", ultimo.get("fecha_nacimiento", ""), "fecha_nacimiento")
 
         st.markdown(f"👤 **Nombre completo:**")
-        st.code(ultimo.get("nombre_completo"))
+        st.code(ultimo.get("nombre_completo", ""))
 
         st.markdown(f"📱 **Teléfono:**")
-        st.code(ultimo.get("num_telefono"))
+        st.code(ultimo.get("num_telefono", ""))
 
         st.markdown(f"🆔 **ID Cliente:**")
-        st.code(ultimo.get("id_cliente"))
+        st.code(ultimo.get("id_cliente", ""))
     else:
         st.warning("No hay registros aún.")
-except:
+except Exception as e:
     st.warning("No se pudo obtener la información del servidor.")
+    st.error(str(e))
 
 # Mostrar todos los registros como tabla
 with st.expander("📋 Ver registros actuales"):
@@ -63,3 +65,4 @@ with st.expander("📋 Ver registros actuales"):
         st.dataframe(df)
     except:
         st.write("No se pudo cargar la tabla.")
+
