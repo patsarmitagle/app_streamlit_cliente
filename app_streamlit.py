@@ -13,7 +13,7 @@ telefono = st.text_input("")
 if st.button("✅ Quiero participar") and telefono:
     payload = {"num_telefono": telefono}
     try:
-        response = requests.post("https://api-cliente-jbz1.onrender.com/registro", json=payload)
+        response = requests.post("https://api-cliente-jbzl.onrender.com/registro", json=payload)
         if response.status_code == 200:
             st.success("¡Registro exitoso! En breve recibirás un mensaje.")
         else:
@@ -33,7 +33,7 @@ def copy_button(label, text, input_id):
 
 # Mostrar datos del último registro
 try:
-    response = requests.get("https://api-cliente-jbz1.onrender.com/registros")
+    response = requests.get("https://api-cliente-jbzl.onrender.com/registros")
     registros = response.json()
 
     # Filtrar registros válidos
