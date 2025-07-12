@@ -32,6 +32,10 @@ def copy_button(label, text, input_id):
     """, height=40)
 
 # Mostrar datos del último registro
+
+if "ultimo_registro" not in st.session_state:
+    st.session_state["ultimo_registro"] = {}
+    
 try:
     response = requests.get("https://api-cliente-jbzl.onrender.com/registros")
     registros = response.json()
@@ -41,24 +45,26 @@ try:
 
     if registros_validos:
         ultimo = registros_validos[-1]
-
+    if ultimo:
         st.markdown("### 🔍 Último registro creado")
 
         col1, col2 = st.columns(2)
 
         with col1:
-            st.markdown(f"**📄 Número de Identificación:** {cliente['num_identificacion']}")
+            st.markdown("**🆔 Número de Identificación:**")
+            st.code(ultimo.get("numero_identificacion", ""), language="")
         with col2:
-            st.markdown(f"**📅 Fecha de Nacimiento:** {cliente['fecha_nacimiento']}")
+            st.markdown("**🎂 Fecha de Nacimiento:**")
+            st.code(ultimo.get("fecha_nacimiento", ""), language="")
             
-        st.write("**👤 Nombre completo:**")
-        st.code(st.session_state["ultimo_registro"]["nombre_completo"])
+        st.markdown("**👤 Nombre completo:**")
+        st.code(ultimo.get("nombre_completo", ""))
 
-        st.write("**📞 Teléfono:**")
-        st.code(st.session_state["ultimo_registro"]["num_telefono"])
+        st.markdown("**📞 Teléfono:**")
+        st.code(ultimo.get("num_telefono", ""))
         
-        st.write(f"🆔 **ID Cliente:**")
-        st.code(ultimo.get("id_cliente"))
+        st.markdown(f"🆔 **ID Cliente:**")
+        st.code(ultimo.get("id_cliente", ""))
     else:
         st.warning("No hay registros válidos aún.")
 
