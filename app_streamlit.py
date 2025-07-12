@@ -17,6 +17,8 @@ if st.button("✅ Quiero participar") and telefono:
         if response.status_code == 200:
             st.success("¡Registro exitoso! En breve recibirás un mensaje.")
             
+            cliente = response.json()
+            
             #Enviar notificacion
             payload_notificacion = {
                 "nombres": cliente["nombres"],
