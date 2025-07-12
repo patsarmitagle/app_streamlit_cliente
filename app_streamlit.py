@@ -43,7 +43,6 @@ try:
         ultimo = registros_validos[-1]
 
         st.markdown("### 🔍 Último registro creado")
-        st.markdown("### 🔍 Último registro creado")
 
         col1, col2 = st.columns(2)
 
