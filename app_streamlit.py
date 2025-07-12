@@ -48,16 +48,10 @@ try:
         col1, col2 = st.columns(2)
 
         with col1:
-            st.write("**Número de Identificación:**")
-            st.text_input("num_id", value=st.session_state["ultimo_registro"]["num_identificacion"], key="mostrar_id", label_visibility="collapsed")
-
+            st.markdown(f"**📄 Número de Identificación:** {cliente['num_identificacion']}")
         with col2:
-            st.write("**Fecha de Nacimiento:**")
-            st.text_input("fecha_nac", value=st.session_state["ultimo_registro"]["fecha_nacimiento"], key="mostrar_fecha", label_visibility="collapsed")
-        
-        st.write("**Fecha de Nacimiento:**")
-        st.code(st.session_state["ultimo_registro"]["fecha_nacimiento"])
-        
+            st.markdown(f"**📅 Fecha de Nacimiento:** {cliente['fecha_nacimiento']}")
+            
         st.write("**👤 Nombre completo:**")
         st.code(st.session_state["ultimo_registro"]["nombre_completo"])
 
