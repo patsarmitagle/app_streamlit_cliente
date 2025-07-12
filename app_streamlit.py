@@ -41,7 +41,7 @@ try:
     registros = response.json()
 
     # Filtrar registros válidos
-registros_validos = [r for r in registros if r["num_identificacion"] != "num_identificacion"]
+    registros_validos = [r for r in registros if r["num_identificacion"] != "num_identificacion"]
 
     if registros_validos:
         ultimo = registros_validos[-1]
