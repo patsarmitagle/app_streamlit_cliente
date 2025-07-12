@@ -48,14 +48,11 @@ try:
     if ultimo:
         st.markdown("### 🔍 Último registro creado")
 
-        col1, col2 = st.columns(2)
+        st.markdown("**🆔 Número de Identificación:**")
+        st.code(ultimo.get("numero_identificacion", ""))
 
-        with col1:
-            st.markdown("**🆔 Número de Identificación:**")
-            st.code(ultimo.get("numero_identificacion", ""), language="")
-        with col2:
-            st.markdown("**🎂 Fecha de Nacimiento:**")
-            st.code(ultimo.get("fecha_nacimiento", ""), language="")
+        st.markdown("**🎂 Fecha de Nacimiento:**")
+        st.code(ultimo.get("fecha_nacimiento", ""), language="")
             
         st.markdown("**👤 Nombre completo:**")
         st.code(ultimo.get("nombre_completo", ""))
