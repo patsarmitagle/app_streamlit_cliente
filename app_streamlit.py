@@ -16,6 +16,21 @@ if st.button("✅ Quiero participar") and telefono:
         response = requests.post("https://api-cliente-jbzl.onrender.com/registro", json=payload)
         if response.status_code == 200:
             st.success("¡Registro exitoso! En breve recibirás un mensaje.")
+            
+            #Enviar notificacion
+            payload_notificacion = {
+                "nombres": cliente["nombres"],
+                "primer_apellido": cliente["primer_apellido"],
+                "num_telefono": cliente["num_telefono"]
+            }
+            notif_response = requests.post(
+                "https://api-notificacion-haqu.onrender.com/enviar-notificacion",
+                json=payload_notificacion
+            )
+            if notif_response.status_code == 200:
+                st.success("📩 Notificación enviada por WhatsApp.")
+            else:
+                st.warning(f"No se pudo enviar la notificación: {notif_response.text}")
         else:
             st.error("Ocurrió un error al registrar.")
     except Exception as e:
@@ -69,6 +84,7 @@ except Exception as e:
     st.warning("No se pudo obtener la información del servidor.")
     st.error(f"{e}")
 
+        
 # Mostrar todos los registros como tabla
 with st.expander("📋 Ver registros actuales"):
     try:
