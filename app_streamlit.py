@@ -21,55 +21,52 @@ if st.button("✅ Quiero participar") and telefono:
     except Exception as e:
         st.error(f"Error al conectar: {e}")
 
+# Función para mostrar input con botón copiar
+def copy_button(label, text, input_id):
+    html(f"""
+        <div style="margin-bottom:10px">
+            <span style="font-weight:bold; margin-right:10px">{label}:</span>
+            <input type="text" value="{text}" id="{input_id}" readonly style="margin-right:10px; padding:5px; border-radius:5px; width:200px"/>
+            <button onclick="navigator.clipboard.writeText(document.getElementById('{input_id}').value)">📋 Copiar</button>
+        </div>
+    """, height=40)
+
 # Mostrar datos del último registro
 try:
     response = requests.get("https://api-cliente-jbz1.onrender.com/registros")
+    registros = response.json()
 
-    if response.status_code == 200 and response.content:
-        registros = response.json()
+    # Filtrar registros válidos
+    registros_validos = [r for r in registros if r["num_identificacion"] != "num_identificacion"]
 
-        if registros:
-            ultimo = registros[-1]
+    if registros_validos:
+        ultimo = registros_validos[-1]
 
-            st.markdown("### 🔍 Último registro creado")
+        st.markdown("### 🔍 Último registro creado")
 
-            # Función para mostrar input con botón copiar
-            def copy_button(label, text, id_html):
-                html(f"""
-                    <div style="margin-bottom:10px">
-                        <span style="font-weight:bold; margin-right:10px">{label}</span>
-                        <input type="text" value="{text}" id="{id_html}" readonly style="margin-right:10px; padding:5px; border-radius:5px; width:200px"/>
-                        <button onclick="navigator.clipboard.writeText(document.getElementById('{id_html}').value)">📋 Copiar</button>
-                    </div>
-                """, height=40)
+        copy_button("Número de Identificación", ultimo.get("num_identificacion"), "id_copy")
+        copy_button("Fecha de Nacimiento", ultimo.get("fecha_nacimiento"), "fecha_copy")
 
-            # Mostrar número de identificación y fecha con botón copiar
-            copy_button("🆔 Número de Identificación", ultimo.get("num_identificacion"), "identificacion")
-            copy_button("📅 Fecha de Nacimiento", ultimo.get("fecha_nacimiento"), "fecha")
+        st.markdown(f"👤 **Nombre completo:**")
+        st.code(ultimo.get("nombre_completo"))
 
-            st.markdown(f"👤 **Nombre completo:**")
-            st.code(ultimo.get("nombre_completo"))
+        st.markdown(f"📱 **Teléfono:**")
+        st.code(ultimo.get("num_telefono"))
 
-            st.markdown(f"📱 **Teléfono:**")
-            st.code(ultimo.get("num_telefono"))
-
-            st.markdown(f"🆔 **ID Cliente:**")
-            st.code(ultimo.get("id_cliente"))
-
-        else:
-            st.warning("No hay registros aún.")
+        st.markdown(f"🆔 **ID Cliente:**")
+        st.code(ultimo.get("id_cliente"))
     else:
-        st.warning("No se pudo obtener la información del servidor.")
+        st.warning("No hay registros válidos aún.")
+
 except Exception as e:
-    st.error(f"Error: {e}")
+    st.warning("No se pudo obtener la información del servidor.")
+    st.error(f"{e}")
 
 # Mostrar todos los registros como tabla
 with st.expander("📋 Ver registros actuales"):
     try:
-        if 'registros' in locals():
-            df = pd.DataFrame(registros)
-            st.dataframe(df)
-        else:
-            st.write("No se pudo cargar la tabla.")
-    except:
+        df = pd.DataFrame(registros_validos)
+        st.dataframe(df)
+    except Exception as e:
         st.write("No se pudo cargar la tabla.")
+        st.error(f"{e}")
