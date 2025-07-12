@@ -54,7 +54,10 @@ try:
         with col2:
             st.write("**Fecha de Nacimiento:**")
             st.text_input("fecha_nac", value=st.session_state["ultimo_registro"]["fecha_nacimiento"], key="mostrar_fecha", label_visibility="collapsed")
-
+        
+        st.write("**Fecha de Nacimiento:**")
+        st.code(st.session_state["ultimo_registro"]["fecha_nacimiento"])
+        
         st.write("**👤 Nombre completo:**")
         st.code(st.session_state["ultimo_registro"]["nombre_completo"])
 
