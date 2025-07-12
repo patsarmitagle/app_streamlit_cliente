@@ -43,17 +43,25 @@ try:
         ultimo = registros_validos[-1]
 
         st.markdown("### 🔍 Último registro creado")
+        st.markdown("### 🔍 Último registro creado")
 
-        copy_button("Número de Identificación", ultimo.get("num_identificacion"), "id_copy")
-        copy_button("Fecha de Nacimiento", ultimo.get("fecha_nacimiento"), "fecha_copy")
+        col1, col2 = st.columns(2)
 
-        st.markdown(f"👤 **Nombre completo:**")
-        st.code(ultimo.get("nombre_completo"))
+        with col1:
+            st.write("**Número de Identificación:**")
+            st.text_input("num_id", value=st.session_state["ultimo_registro"]["num_identificacion"], key="mostrar_id", label_visibility="collapsed")
 
-        st.markdown(f"📱 **Teléfono:**")
-        st.code(ultimo.get("num_telefono"))
+        with col2:
+            st.write("**Fecha de Nacimiento:**")
+            st.text_input("fecha_nac", value=st.session_state["ultimo_registro"]["fecha_nacimiento"], key="mostrar_fecha", label_visibility="collapsed")
 
-        st.markdown(f"🆔 **ID Cliente:**")
+        st.write("**👤 Nombre completo:**")
+        st.code(st.session_state["ultimo_registro"]["nombre_completo"])
+
+        st.write("**📞 Teléfono:**")
+        st.code(st.session_state["ultimo_registro"]["num_telefono"])
+        
+        st.write(f"🆔 **ID Cliente:**")
         st.code(ultimo.get("id_cliente"))
     else:
         st.warning("No hay registros válidos aún.")
