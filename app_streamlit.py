@@ -41,7 +41,7 @@ try:
     registros = response.json()
 
     # Filtrar registros válidos
-   # registros_validos = [r for r in registros if r["num_identificacion"] != "num_identificacion"]
+    registros_validos = [r for r in registros if r["num_identificacion"] != "num_identificacion"]
 
     if registros_validos:
         ultimo = registros_validos[-1]
@@ -49,7 +49,7 @@ try:
         st.markdown("### 🔍 Último registro creado")
 
         st.markdown("**🆔 Número de Identificación:**")
-        st.code(ultimo.get("numero_identificacion", ""))
+        st.code(ultimo.get("num_identificacion", ""),"")
 
         st.markdown("**🎂 Fecha de Nacimiento:**")
         st.code(ultimo.get("fecha_nacimiento", ""), language="")
