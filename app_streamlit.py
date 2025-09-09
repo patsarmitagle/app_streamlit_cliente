@@ -5,6 +5,8 @@ from streamlit.components.v1 import html
 
 st.set_page_config(page_title="Registro Préstamos", layout="centered")
 
+st.image("logo.png", width=150) 
+
 st.title("📲 Registro a la Campaña de Préstamos")
 st.markdown("Ingresá tu número con código país (ej: 5491123456789):")
 
