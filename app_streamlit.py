@@ -58,7 +58,8 @@ with st.container():
     with st.form("form_registro", clear_on_submit=False):
         telefono = st.text_input(
             "Número de WhatsApp",
-            placeholder="5491123456789"
+            placeholder="5491123456789",
+            label_visibility="collapsed" 
         )
         enviar = st.form_submit_button("✅ Quiero participar", use_container_width=True)
 
