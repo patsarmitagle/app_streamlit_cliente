@@ -53,15 +53,16 @@ PHONE_RE = re.compile(r"^\d{11,15}$")
 def es_telefono_valido(tel: str) -> bool:
     return bool(PHONE_RE.match(tel))
 
-with st.container():
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    with st.form("form_registro", clear_on_submit=False):
-        telefono = st.text_input(
-            "Número de WhatsApp",
-            placeholder="5491123456789",
-            label_visibility="hidden"
-        )
-        enviar = st.form_submit_button("✅ Quiero participar", use_container_width=True)
+# Solo usamos el div con clase "card"
+st.markdown('<div class="card">', unsafe_allow_html=True)
+
+with st.form("form_registro", clear_on_submit=False):
+    telefono = st.text_input(
+        "Número de WhatsApp",
+        placeholder="5491123456789",
+        label_visibility="hidden"
+    )
+    enviar = st.form_submit_button("✅ Quiero participar", use_container_width=True)
 
     if enviar:
         if not es_telefono_valido(telefono.strip()):
@@ -80,7 +81,8 @@ with st.container():
                         st.error("Error al registrar.")
                 except Exception as e:
                     st.error(f"Error de conexión: {e}")
-    st.markdown('</div>', unsafe_allow_html=True)
+
+st.markdown('</div>', unsafe_allow_html=True)
 
 st.markdown("---")
 
