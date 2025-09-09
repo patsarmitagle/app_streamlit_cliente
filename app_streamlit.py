@@ -46,7 +46,7 @@ st.image("Logo_BeClever_VersionPrincipal_Color.png", width=150)
 st.markdown("## 📲 Registro a la Campaña de Préstamos")
 st.caption("Ingresá tu número con código país (ej: 5491123456789)")
 
-#st.markdown("---")
+st.markdown("---")
 
 # ===== Formulario =====
 PHONE_RE = re.compile(r"^\d{11,15}$")
