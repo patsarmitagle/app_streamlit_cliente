@@ -1,99 +1,87 @@
-import streamlit as st
+import re
 import requests
 import pandas as pd
-from streamlit.components.v1 import html
+import streamlit as st
 
-st.set_page_config(page_title="Registro Préstamos", layout="centered")
+st.set_page_config(
+    page_title="Registro Préstamos",
+    page_icon="📲",
+    layout="centered"
+)
 
-st.image("Logo_BeClever_VersionPrincipal_Color.png", width=250)
+# ===== Estilos =====
+st.markdown("""
+<style>
+#MainMenu {visibility: hidden;}
+footer {visibility: hidden;}
+header {visibility: hidden;}
 
-st.title("📲 Registro a la Campaña de Préstamos")
-st.markdown("Ingresá tu número con código país (ej: 5491123456789):")
+.main {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+.card {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 16px;
+  padding: 1.5rem;
+  text-align: center;
+  max-width: 500px;
+}
+.badge {
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 12px;
+  padding: .75rem;
+  margin-bottom: .5rem;
+  font-size: 0.95rem;
+  text-align: center;
+}
+</style>
+""", unsafe_allow_html=True)
 
-telefono = st.text_input("")
+# ===== Header centrado =====
+st.image("Logo_BeClever_VersionPrincipal_Color.png", width=150)
+st.markdown("## 📲 Registro a la Campaña de Préstamos")
+st.caption("Ingresá tu número con código país (ej: 5491123456789)")
 
-if st.button("✅ Quiero participar") and telefono:
-    payload = {"num_telefono": telefono}
-    try:
-        response = requests.post("https://api-cliente-jbzl.onrender.com/registro", json=payload)
-        if response.status_code == 200:
-            st.success("¡Registro exitoso! En breve recibirás un mensaje.")
-            
-            cliente = response.json()
-            
-            #Enviar notificacion
-            payload_notificacion = {
-                "nombres": cliente["nombres"],
-                "primer_apellido": cliente["primer_apellido"],
-                "num_telefono": cliente["num_telefono"]
-            }
-            notif_response = requests.post(
-                "https://api-notificacion-haqu.onrender.com/enviar-notificacion",
-                json=payload_notificacion
-            )
-            if notif_response.status_code == 200:
-                st.success("📩 Notificación enviada por WhatsApp.")
-            else:
-                st.warning(f"No se pudo enviar la notificación: {notif_response.text}")
+st.markdown("---")
+
+# ===== Formulario =====
+PHONE_RE = re.compile(r"^\d{11,15}$")
+def es_telefono_valido(tel: str) -> bool:
+    return bool(PHONE_RE.match(tel))
+
+with st.container():
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    with st.form("form_registro", clear_on_submit=False):
+        telefono = st.text_input(
+            "Número de WhatsApp",
+            placeholder="5491123456789"
+        )
+        enviar = st.form_submit_button("✅ Quiero participar", use_container_width=True)
+
+    if enviar:
+        if not es_telefono_valido(telefono.strip()):
+            st.error("Revisá el formato (11–15 dígitos, con código país).")
         else:
-            st.error("Ocurrió un error al registrar.")
-    except Exception as e:
-        st.error(f"Error al conectar: {e}")
+            with st.spinner("Registrando…"):
+                try:
+                    r = requests.post(
+                        "https://api-cliente-jbzl.onrender.com/registro",
+                        json={"num_telefono": telefono.strip()},
+                        timeout=20
+                    )
+                    if r.status_code == 200:
+                        st.success("¡Registro exitoso! En breve recibirás un mensaje.")
+                    else:
+                        st.error("Error al registrar.")
+                except Exception as e:
+                    st.error(f"Error de conexión: {e}")
+    st.markdown('</div>', unsafe_allow_html=True)
 
-# Función para mostrar input con botón copiar
-def copy_button(label, text, input_id):
-    html(f"""
-        <div style="margin-bottom:10px">
-            <span style="font-weight:bold; margin-right:10px">{label}:</span>
-            <input type="text" value="{text}" id="{input_id}" readonly style="margin-right:10px; padding:5px; border-radius:5px; width:200px"/>
-            <button onclick="navigator.clipboard.writeText(document.getElementById('{input_id}').value)">📋 Copiar</button>
-        </div>
-    """, height=40)
+st.markdown("---")
 
-# Mostrar datos del último registro
-
-if "ultimo_registro" not in st.session_state:
-    st.session_state["ultimo_registro"] = {}
-    
-try:
-    response = requests.get("https://api-cliente-jbzl.onrender.com/registros")
-    registros = response.json()
-
-    # Filtrar registros válidos
-    registros_validos = [r for r in registros if r["num_identificacion"] != "num_identificacion"]
-
-    if registros_validos:
-        ultimo = registros_validos[-1]
-    if ultimo:
-        st.markdown("### 🔍 Último registro creado")
-
-        st.markdown("**🆔 Número de Identificación:**")
-        st.code(ultimo.get("num_identificacion", ""),"")
-
-        st.markdown("**🎂 Fecha de Nacimiento:**")
-        st.code(ultimo.get("fecha_nacimiento", ""), language="")
-            
-        st.markdown("**👤 Nombre completo:**")
-        st.code(ultimo.get("nombre_completo", ""))
-
-        st.markdown("**📞 Teléfono:**")
-        st.code(ultimo.get("num_telefono", ""))
-        
-        st.markdown(f"🆔 **ID Cliente:**")
-        st.code(ultimo.get("id_cliente", ""))
-    else:
-        st.warning("No hay registros válidos aún.")
-
-except Exception as e:
-    st.warning("No se pudo obtener la información del servidor.")
-    st.error(f"{e}")
-
-        
-# Mostrar todos los registros como tabla
-with st.expander("📋 Ver registros actuales"):
-    try:
-        df = pd.DataFrame(registros_validos)
-        st.dataframe(df)
-    except Exception as e:
-        st.write("No se pudo cargar la tabla.")
-        st.error(f"{e}")
+# ===== Último registro =====
+st.subheader("🔍 Último registro creado")
