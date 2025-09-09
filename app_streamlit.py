@@ -83,5 +83,51 @@ with st.container():
 
 st.markdown("---")
 
-# ===== Último registro =====
+# ===== Último registro (cards) =====
 st.subheader("🔍 Último registro creado")
+
+ultimo = None
+registros_validos = []
+try:
+    r_all = requests.get("https://api-cliente-jbzl.onrender.com/registros", timeout=20)
+    if r_all.status_code == 200:
+        registros = r_all.json()
+        registros_validos = [r for r in registros if r.get("num_identificacion") not in (None, "", "num_identificacion")]
+        if registros_validos:
+            ultimo = registros_validos[-1]
+    else:
+        st.warning(f"No se pudo obtener registros (HTTP {r_all.status_code}).")
+
+except Exception as e:
+    st.warning("No se pudo obtener la información del servidor.")
+    st.exception(e)
+
+if ultimo:
+    c1, c2 = st.columns(2)
+    with c1:
+        st.markdown(f"""<div class="badge"><strong>🆔 Número de Identificación</strong>{ultimo.get("num_identificacion","—")}</div>""",
+                    unsafe_allow_html=True)
+        st.markdown(f"""<div class="badge"><strong>👤 Nombre completo</strong>{ultimo.get("nombre_completo","—")}</div>""",
+                    unsafe_allow_html=True)
+    with c2:
+        st.markdown(f"""<div class="badge"><strong>🎂 Fecha de Nacimiento</strong>{ultimo.get("fecha_nacimiento","—")}</div>""",
+                    unsafe_allow_html=True)
+        st.markdown(f"""<div class="badge"><strong>📞 Teléfono</strong>{ultimo.get("num_telefono","—")}</div>""",
+                    unsafe_allow_html=True)
+
+    st.markdown(f"""<div class="badge"><strong>🆔 ID Cliente</strong>{ultimo.get("id_cliente","—")}</div>""",
+                unsafe_allow_html=True)
+else:
+    st.info("No hay registros válidos aún.")
+
+# ===== Tabla de registros =====
+with st.expander("📋 Ver registros actuales"):
+    if registros_validos:
+        try:
+            df = pd.DataFrame(registros_validos)
+            st.dataframe(df, use_container_width=True)
+        except Exception as e:
+            st.write("No se pudo cargar la tabla.")
+            st.exception(e)
+    else:
+        st.caption("Sin datos para mostrar.")
