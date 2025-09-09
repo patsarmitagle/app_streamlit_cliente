@@ -5,7 +5,7 @@ from streamlit.components.v1 import html
 
 st.set_page_config(page_title="Registro Préstamos", layout="centered")
 
-st.image("Logo_BeClever_VersionPrincipal_Color.png", width=150)
+st.image("Logo_BeClever_VersionPrincipal_Color.png", width=250)
 
 st.title("📲 Registro a la Campaña de Préstamos")
 st.markdown("Ingresá tu número con código país (ej: 5491123456789):")
