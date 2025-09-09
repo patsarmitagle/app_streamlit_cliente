@@ -46,7 +46,7 @@ st.image("Logo_BeClever_VersionPrincipal_Color.png", width=150)
 st.markdown("## 📲 Registro a la Campaña de Préstamos")
 st.caption("Ingresá tu número con código país (ej: 5491123456789)")
 
-st.markdown("---")
+#st.markdown("---")
 
 # ===== Formulario =====
 PHONE_RE = re.compile(r"^\d{11,15}$")
@@ -59,7 +59,7 @@ with st.container():
         telefono = st.text_input(
             "Número de WhatsApp",
             placeholder="5491123456789",
-            label_visibility="collapsed" 
+            label_visibility="collapsed"
         )
         enviar = st.form_submit_button("✅ Quiero participar", use_container_width=True)
 
