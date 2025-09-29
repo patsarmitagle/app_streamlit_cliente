@@ -181,7 +181,7 @@ st.markdown("Ingresá tu número con código país (ej: **5491123456789**).")
 
 with st.form("form_registro", clear_on_submit=False):
     telefono = st.text_input("", placeholder="5491123456789")
-    enviar = st.form_submit_button("✅ Quiero participar", use_container_width=True)
+    enviar = st.form_submit_button("✅ Validar mi télefono", use_container_width=True)
 
 if enviar:
     tel = (telefono or "").strip()
@@ -194,7 +194,7 @@ if enviar:
                 resp = requests.post(API_APPEND, json=alta, timeout=TIMEOUT)
                 st.session_state["ultima_respuesta_append"] = resp
                 if 200 <= resp.status_code < 300:
-                    st.success("¡Registro enviado al backend (/append)!")
+                    st.success("Tus datos forman parte de nuestra campaña!")
                     st.session_state["ultimo_registro_enviado"] = alta
                     st.session_state["ultima_cedula"] = alta.get("num_identificacion", "")
 
@@ -245,7 +245,7 @@ if enviar:
                             n = requests.post(API_NOTIF, json=payload_notif, timeout=TIMEOUT)
                             st.session_state["ultima_respuesta_notif"] = n
                             if 200 <= n.status_code < 300:
-                                st.success("📩 Notificación enviada por WhatsApp.")
+                                st.success("📩 Muy pronto un ejecutivo te contactará por WhatsApp.")
                             else:
                                 st.warning(f"No se pudo enviar la notificación (HTTP {n.status_code}).")
                         except Exception as e:
