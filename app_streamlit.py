@@ -7,14 +7,11 @@ import time
 from datetime import date, timedelta, datetime
 from typing import Dict, Any, List, Optional, Union
 
-# ---------------------------
-# Config de página
-# ---------------------------
+# =======================
+# Config y Sidebar
+# =======================
 st.set_page_config(page_title="Registro Préstamos", layout="centered", page_icon="📲")
 
-# ---------------------------
-# Sidebar (endpoints y opciones)
-# ---------------------------
 st.sidebar.header("⚙️ Configuración")
 API_APPEND = st.sidebar.text_input(
     "Endpoint alta (append)",
@@ -28,25 +25,24 @@ API_NOTIF = st.sidebar.text_input(
     "Endpoint notificación WhatsApp",
     value="https://api-notificacion-haqu.onrender.com/enviar-notificacion",
 )
-
 ENVIAR_NOTIF = st.sidebar.checkbox("Enviar notificación por WhatsApp", value=True)
 TIMEOUT = st.sidebar.number_input("Timeout (seg)", min_value=5, max_value=60, value=20, step=1)
 
 st.sidebar.markdown("---")
-VALIDAR_PERSISTENCIA = st.sidebar.checkbox("Validar escritura en backend (GET inmediato)", value=True)
+VALIDAR_PERSISTENCIA = st.sidebar.checkbox("Validar escritura (GET inmediato)", value=True)
 REINTENTOS = st.sidebar.number_input("Reintentos GET /filter", min_value=0, max_value=10, value=3, step=1)
 ESPERA = st.sidebar.number_input("Espera entre reintentos (seg)", min_value=0, max_value=30, value=2, step=1)
 
-# ---------------------------
-# Encabezado
-# ---------------------------
-st.image("Logo_BeClever_VersionPrincipal_Color.png", width=250)
-st.title("📲 Registro a la Campaña de Préstamos")
-st.markdown("Ingresá tu número con código país (ej: **5491123456789**).")
+st.sidebar.markdown("---")
+IGNORAR_MISMATCH = set(st.sidebar.multiselect(
+    "Ignorar diferencias en campos",
+    options=["id_cliente", "num_telefono", "nombres", "primer_apellido"],
+    default=["id_cliente", "num_telefono"],
+))
 
-# ---------------------------
+# =======================
 # Utilidades
-# ---------------------------
+# =======================
 PHONE_RE = re.compile(r"^\d{11,15}$")
 def es_telefono_valido(tel: str) -> bool:
     return bool(PHONE_RE.match((tel or "").strip()))
@@ -137,27 +133,54 @@ def consultar_por_cedula(api_filter_base: str, cedula: str, timeout: int = 20) -
 def mostrar_http(label: str, resp: requests.Response):
     st.markdown(f"**{label}** — HTTP `{resp.status_code}`")
     with st.expander(f"Ver respuesta cruda de {label}"):
-        # Intenta JSON, cae a texto
         try:
             st.json(resp.json())
         except Exception:
             st.code(resp.text)
 
-# ---------------------------
+def render_info_grid(datos: Dict[str, Any], titulo_izq: str = "🆔 Número de Identificación:", titulo_der: str = "👤 Nombre completo:"):
+    c1, c2 = st.columns(2)
+    with c1:
+        st.markdown(f"**{titulo_izq}**")
+        st.code(str(datos.get("num_identificacion","")))
+    with c2:
+        st.markdown(f"**{titulo_der}**")
+        st.code(str(datos.get("nombre_completo","")))
+    c3, c4 = st.columns(2)
+    with c3:
+        st.markdown("**🎂 Fecha de Nacimiento:**")
+        st.code(str(datos.get("fecha_nacimiento","")))
+    with c4:
+        st.markdown("**📞 Teléfono:**")
+        st.code(str(datos.get("num_telefono","")))
+    c5, _ = st.columns([1,1])
+    with c5:
+        st.markdown("**🆔 ID Cliente:**")
+        st.code(str(datos.get("id_cliente","")))
+
+# =======================
 # Estado
-# ---------------------------
+# =======================
 if "ultimo_registro_enviado" not in st.session_state:
     st.session_state["ultimo_registro_enviado"] = None
 if "ultima_cedula" not in st.session_state:
     st.session_state["ultima_cedula"] = ""
 if "ultimo_registro_remoto" not in st.session_state:
     st.session_state["ultimo_registro_remoto"] = None
+if "ultima_respuesta_append" not in st.session_state:
+    st.session_state["ultima_respuesta_append"] = None
+if "ultima_respuesta_notif" not in st.session_state:
+    st.session_state["ultima_respuesta_notif"] = None
 
-# ---------------------------
-# Formulario de alta
-# ---------------------------
+# =======================
+# BLOQUE 1 — Registro (PRIMERO)
+# =======================
+st.image("Logo_BeClever_VersionPrincipal_Color.png", width=250)
+st.title("📲 Registro a la Campaña de Préstamos")
+st.markdown("Ingresá tu número con código país (ej: **5491123456789**).")
+
 with st.form("form_registro", clear_on_submit=False):
-    telefono = st.text_input("Número de WhatsApp", placeholder="5491123456789", label_visibility="hidden")
+    telefono = st.text_input("", placeholder="5491123456789")
     enviar = st.form_submit_button("✅ Quiero participar", use_container_width=True)
 
 if enviar:
@@ -169,14 +192,13 @@ if enviar:
         with st.spinner("Registrando…"):
             try:
                 resp = requests.post(API_APPEND, json=alta, timeout=TIMEOUT)
-                mostrar_http("Respuesta /append", resp)
-
+                st.session_state["ultima_respuesta_append"] = resp
                 if 200 <= resp.status_code < 300:
                     st.success("¡Registro enviado al backend (/append)!")
                     st.session_state["ultimo_registro_enviado"] = alta
                     st.session_state["ultima_cedula"] = alta.get("num_identificacion", "")
 
-                    # Validación inmediata en backend (GET /filter/{id})
+                    # Validación inmediata de persistencia
                     if VALIDAR_PERSISTENCIA and st.session_state["ultima_cedula"]:
                         ced = st.session_state["ultima_cedula"]
                         encontrado = None
@@ -185,8 +207,7 @@ if enviar:
                                 encontrado = consultar_por_cedula(API_FILTER_BASE, ced, TIMEOUT)
                                 if encontrado:
                                     break
-                            except Exception as ge:
-                                # Puedes abrir un expander para ver el error por intento si querés
+                            except Exception:
                                 pass
                             if i < REINTENTOS:
                                 time.sleep(ESPERA)
@@ -194,19 +215,25 @@ if enviar:
                         if encontrado:
                             st.success("✓ Persistencia verificada: /filter devolvió el registro.")
                             st.session_state["ultimo_registro_remoto"] = encontrado
-                            with st.expander("📥 Payload recuperado de /filter/{id}"):
-                                st.json(encontrado)
 
-                            # Validación básica de coincidencias clave
-                            mismatches = []
-                            for k in ["num_identificacion", "num_telefono", "id_cliente", "nombres", "primer_apellido"]:
-                                if str(alta.get(k, "")) != str(encontrado.get(k, "")):
-                                    mismatches.append(k)
+                            # Validación con ignorados
+                            campos_a_chequear = ["num_identificacion", "num_telefono", "id_cliente", "nombres", "primer_apellido"]
+                            mismatches, cambios_ignorados = [], []
+                            for k in campos_a_chequear:
+                                enviado_v = str(alta.get(k, ""))
+                                recibido_v = str(encontrado.get(k, ""))
+                                if enviado_v != recibido_v:
+                                    if k in IGNORAR_MISMATCH:
+                                        cambios_ignorados.append(k)
+                                    else:
+                                        mismatches.append(k)
+                            if cambios_ignorados:
+                                st.info(f"🔄 El backend modificó (ignorado por config): {', '.join(cambios_ignorados)}")
                             if mismatches:
-                                st.warning(f"⚠️ Campos que no coinciden entre el enviado y el recuperado: {', '.join(mismatches)}")
+                                st.warning(f"⚠️ Campos que no coinciden: {', '.join(mismatches)}")
                         else:
                             st.error("✗ No se encontró el registro en /filter/{id} tras los reintentos.")
-                            st.info("Revisá Orchestrate/Code Engine o aumenta reintentos/espera en la sidebar.")
+
                     # Notificación opcional
                     if ENVIAR_NOTIF:
                         payload_notif = {
@@ -216,13 +243,14 @@ if enviar:
                         }
                         try:
                             n = requests.post(API_NOTIF, json=payload_notif, timeout=TIMEOUT)
-                            mostrar_http("Respuesta notificación", n)
+                            st.session_state["ultima_respuesta_notif"] = n
                             if 200 <= n.status_code < 300:
                                 st.success("📩 Notificación enviada por WhatsApp.")
                             else:
                                 st.warning(f"No se pudo enviar la notificación (HTTP {n.status_code}).")
                         except Exception as e:
                             st.warning(f"No se pudo enviar la notificación: {e}")
+
                 else:
                     st.error(f"Error en alta (HTTP {resp.status_code}).")
             except Exception as e:
@@ -230,10 +258,10 @@ if enviar:
 
 st.markdown("---")
 
-# ---------------------------
-# Consulta manual/rápida a /filter/{id}
-# ---------------------------
-st.subheader("🔍 Consultar en backend (por cédula)")
+# =======================
+# BLOQUE 2 — Consulta en backend (PRIMERO DESPUÉS DEL FORM)
+# =======================
+st.subheader("🔎 Consultar en backend (por cédula)")
 cedula_default = st.session_state.get("ultima_cedula", "")
 col_inp, col_btn = st.columns([3,1])
 with col_inp:
@@ -241,62 +269,47 @@ with col_inp:
 with col_btn:
     refrescar = st.button("🔄 Refrescar en backend", use_container_width=True)
 
+registro_remoto = None
 if (cedula_input or "").strip() and refrescar:
     with st.spinner("Consultando /filter/{id}…"):
         try:
-            reg = consultar_por_cedula(API_FILTER_BASE, cedula_input, TIMEOUT)
-            if reg:
+            registro_remoto = consultar_por_cedula(API_FILTER_BASE, cedula_input, TIMEOUT)
+            if registro_remoto:
                 st.success("Datos recuperados desde el backend.")
-                st.session_state["ultimo_registro_remoto"] = reg
-                st.json(reg)
+                st.session_state["ultimo_registro_remoto"] = registro_remoto
             else:
                 st.info("No se encontró registro para esa cédula.")
         except Exception as e:
             st.error(f"No se pudo consultar el backend: {e}")
 
-# ---------------------------
-# Tabs: Enviado vs Recuperado
-# ---------------------------
+# Tabs de visualización (se muestran acá, antes del resto)
 tab1, tab2 = st.tabs(["📤 Enviado (esta sesión)", "📥 Recuperado (backend)"])
-
 with tab1:
     enviado = st.session_state.get("ultimo_registro_enviado")
     if enviado:
-        col1, col2 = st.columns(2)
-        with col1:
-            st.markdown("**🆔 Número de Identificación:**")
-            st.code(str(enviado.get("num_identificacion", "")))
-            st.markdown("**🎂 Fecha de Nacimiento:**")
-            st.code(str(enviado.get("fecha_nacimiento", "")))
-            st.markdown("**🆔 ID Cliente:**")
-            st.code(str(enviado.get("id_cliente", "")))
-        with col2:
-            st.markdown("**👤 Nombre completo:**")
-            st.code(str(enviado.get("nombre_completo", "")))
-            st.markdown("**📞 Teléfono:**")
-            st.code(str(enviado.get("num_telefono", "")))
+        render_info_grid(enviado)
     else:
         st.info("Aún no enviaste un registro en esta sesión.")
-
 with tab2:
     recuperado = st.session_state.get("ultimo_registro_remoto")
     if recuperado:
-        col1, col2 = st.columns(2)
-        with col1:
-            st.markdown("**🆔 Número de Identificación:**")
-            st.code(str(recuperado.get("num_identificacion", "")))
-            st.markdown("**🎂 Fecha de Nacimiento:**")
-            st.code(str(recuperado.get("fecha_nacimiento", "")))
-            st.markdown("**🆔 ID Cliente:**")
-            st.code(str(recuperado.get("id_cliente", "")))
-        with col2:
-            st.markdown("**👤 Nombre completo:**")
-            st.code(str(recuperado.get("nombre_completo", "")))
-            st.markdown("**📞 Teléfono:**")
-            st.code(str(recuperado.get("num_telefono", "")))
+        render_info_grid(recuperado)
         with st.expander("📋 Ver payload completo"):
             df = pd.DataFrame([recuperado]).T
             st.dataframe(df, use_container_width=True)
     else:
         st.info("Aún no hay datos recuperados. Usá el alta o la consulta manual.")
+
+# =======================
+# BLOQUE 3 — Avanzado / Debug (DESPUÉS)
+# =======================
+st.markdown("---")
+with st.expander("🛠️ Avanzado / Debug"):
+    resp_append = st.session_state.get("ultima_respuesta_append")
+    if resp_append is not None:
+        mostrar_http("Respuesta /append", resp_append)
+
+    resp_notif = st.session_state.get("ultima_respuesta_notif")
+    if resp_notif is not None:
+        mostrar_http("Respuesta notificación", resp_notif)
 
