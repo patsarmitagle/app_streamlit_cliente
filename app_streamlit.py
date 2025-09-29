@@ -213,7 +213,7 @@ if enviar:
                                 time.sleep(ESPERA)
 
                         if encontrado:
-                            st.success("✓ Persistencia verificada: /filter devolvió el registro.")
+                            st.success("Tu número de celular fue validado correctamente!")
                             st.session_state["ultimo_registro_remoto"] = encontrado
 
                             # Validación con ignorados
