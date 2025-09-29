@@ -176,7 +176,7 @@ if "ultima_respuesta_notif" not in st.session_state:
 # BLOQUE 1 — Registro (PRIMERO)
 # =======================
 st.image("Logo_BeClever_VersionPrincipal_Color.png", width=250)
-st.title("📲 Registro a la Campaña de Préstamos")
+st.title("Valida si fuiste asignado a la Campaña de Préstamos")
 st.markdown("Ingresá tu número con código país (ej: **5491123456789**).")
 
 with st.form("form_registro", clear_on_submit=False):
